@@ -1,8 +1,8 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: perf-analyzer-job
-  namespace: default
+  name: perf-analyzer-cck
+  namespace: cms-ml-production
 spec:
   parallelism: 1
   completions: 1
@@ -20,7 +20,7 @@ spec:
             echo "Running perf_analyzer..."
             perf_analyzer -i grpc \
                           -m higgsInteractionNet \
-                          -u supersonic.default.svc.cluster.local:8001 \
+                          -u supersonic-cck.cms-ml-production.svc.cluster.local:8001 \
                           --async -p 1 -b 100 \
                           --request-count=1 \
                           --concurrency-range=1 --input-data "random"
