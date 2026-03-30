@@ -38,9 +38,9 @@ prometheus:
   enabled: true
   serviceAccounts:
     server:
-      name: supersonic-cck-prometheus-sa
+      name: supersonic-cck-stable-prometheus-sa
   server:
-    useExistingClusterRoleName: supersonic-cck-prometheus-role
+    useExistingClusterRoleName: supersonic-cck-stable-prometheus-role
     ingress:
       enabled: true
       hosts:
@@ -57,7 +57,7 @@ prometheus:
 grafana:
   enabled: true
   dashboardsConfigMaps:
-    default: supersonic-cck-grafana-default-dashboard
+    default: supersonic-cck-stable-grafana-default-dashboard
   datasources:
     datasources.yaml:
       datasources:
@@ -65,7 +65,7 @@ grafana:
           type: prometheus
           access: proxy
           isDefault: true
-          url: http://supersonic-cck-prometheus-server:9090
+          url: http://supersonic-cck-stable-prometheus-server:9090
           jsonData:
             timeInterval: "5s"
             tlsSkipVerify: true

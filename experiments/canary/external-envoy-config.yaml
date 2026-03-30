@@ -5,6 +5,10 @@ metadata:
   namespace: cms-ml-production
 data:
   envoy.yaml: |
+    admin:
+      access_log_path: /tmp/admin_access.log
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 9901 }
     static_resources:
       listeners:
       - name: listener_grpc
@@ -43,6 +47,8 @@ data:
                           weight: 10
               http_filters:
               - name: envoy.filters.http.router
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
       clusters:
       - name: triton_stable
@@ -56,7 +62,7 @@ data:
             - endpoint:
                 address:
                   socket_address:
-                    address: supersonic-cck-triton
+                    address: supersonic-cck-stable-triton
                     port_value: 8001
 
       - name: triton_canary

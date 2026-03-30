@@ -15,8 +15,8 @@ triton:
   image: fastml/triton-torchgeo:22.07-py3-geometric # run3
   command: ["/bin/sh", "-c"]
   resources:
-    limits: { cpu: 2, memory: 8G}
-    requests: { cpu: 2, memory: 8G}
+    limits: { cpu: 2, memory: 8G, nvidia.com/gpu: 1}
+    requests: { cpu: 2, memory: 8G, nvidia.com/gpu: 1}
 
   args:
     - |
