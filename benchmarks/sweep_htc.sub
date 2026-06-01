@@ -1,0 +1,20 @@
+# sweep_htc.sub
+# One job per batch size — parallel sweep against bare Triton
+
+universe             = vanilla
+executable           = benchmark_htc.sh
+arguments            = $(BS) f03-001-155-e.gridka.de
+
+transfer_input_files       = benchmark_htc.sh
+should_transfer_files      = YES
+when_to_transfer_output    = ON_EXIT
+
+output               = logs/sweep_bs$(BS).out
+error                = logs/sweep_bs$(BS).err
+log                  = logs/sweep.log
+
+request_cpus         = 1
+request_memory       = 2GB
+request_disk         = 1GB
+
+Queue BS in (1, 2, 5, 10, 25, 50, 100)

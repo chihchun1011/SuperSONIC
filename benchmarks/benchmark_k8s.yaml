@@ -1,0 +1,75 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: benchmark-sweep-supersonic
+  namespace: supersonic             
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: bench
+          image: nvcr.io/nvidia/tritonserver:22.07-py3-sdk
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+
+              # ── Configuration ──────────────────────────────────
+              # Change these to match your non-interlink deployment
+              NAMESPACE="supersonic"
+              SERVICE_NAME="supersonic-triton"
+              TRITON_URL="${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local:8001"
+              TRITON_HTTP="${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local:8000"
+              MODEL="higgsInteractionNet"
+              OUTDIR="/results"
+              # ───────────────────────────────────────────────────
+
+              mkdir -p $OUTDIR
+
+              echo "=== Configuration ==="
+              echo "  TRITON_URL:  $TRITON_URL"
+              echo "  TRITON_HTTP: $TRITON_HTTP"
+              echo "  MODEL:       $MODEL"
+              echo ""
+
+              echo "=== Checking Triton health ==="
+              curl -sf http://${TRITON_HTTP}/v2/health/ready \
+                && echo "Triton ready" || { echo "Triton not ready"; exit 1; }
+
+              echo "=== Available models ==="
+              curl -sf http://${TRITON_HTTP}/v2/models/stats | python3 -m json.tool || true
+
+              for BS in 1 2 5 10 25 50 100; do
+                echo ""
+                echo "============================================"
+                echo "  Batch size: $BS"
+                echo "============================================"
+                perf_analyzer -i grpc \
+                  -m $MODEL \
+                  -u $TRITON_URL \
+                  -b $BS \
+                  --concurrency-range 1:1 \
+                  --measurement-interval 10000 \
+                  --async \
+                  --input-data random \
+                  --verbose-csv \
+                  -f ${OUTDIR}/perf_bs${BS}.csv \
+                  2>&1 | tee ${OUTDIR}/perf_bs${BS}.log
+              done
+
+              echo ""
+              echo "=== All CSVs ==="
+              ls -la $OUTDIR/
+
+              echo ""
+              echo "=== Dumping all CSV contents to stdout ==="
+              for f in $OUTDIR/*.csv; do
+                echo "--- $f ---"
+                cat "$f"
+                echo ""
+              done
+
+              echo "=== Sleeping 600s for file retrieval ==="
+              sleep 600
