@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: perf-analyzer-job
-  namespace: supersonic-f03
+  namespace: supersonic
 spec:
   parallelism: 1
   completions: 1
@@ -20,6 +20,6 @@ spec:
             echo "Running perf_analyzer..."
             perf_analyzer -i grpc \
                           -m higgsInteractionNet \
-                          -u supersonic-f03.supersonic-f03.svc.cluster.local:8001 \
+                          -u supersonic.supersonic.svc.cluster.local:8001 \
                           --async -p 1 -b 100  --measurement-interval=5000 \
                           --concurrency-range=1:1 --input-data "random"

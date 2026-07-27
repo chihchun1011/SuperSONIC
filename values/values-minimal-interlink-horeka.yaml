@@ -1,0 +1,88 @@
+triton:
+  replicas: 1
+  image: /hkfs/home/project/hk-project-test-hep/scc-sdm-hep-0001/software/IaaS/images/triton-torchgeo_22.07-py3-geometric.sif # pre-pull
+  command: ["/bin/sh", "-c"]
+  args:
+    - |
+      /opt/tritonserver/bin/tritonserver \
+      --model-repository=/hkfs/home/hk-project-test-hep/scc-sdm-hep-0001/software/IaaS/models/ \
+      --log-verbose=0 \
+      --strict-model-config=false \
+      --disable-auto-complete-config \
+      --exit-timeout-secs=60
+  # resources:
+  #   limits: { cpu: 2, memory: 8G, nvidia.com/gpu: 1}
+  #   # requests: { cpu: 2, memory: 8G, nvidia.com/gpu: 1}
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/hostname: interlink-hpc-node
+  tolerations:
+    - key: virtual-node.interlink/no-schedule
+      operator: Exists
+  modelRepository:
+    enabled: true
+    storageType: hostPath
+    hostPath: /hkfs/home/hk-project-test-hep/scc-sdm-hep-0001/software/IaaS/models/
+    mountPath: /hkfs/home/hk-project-test-hep/scc-sdm-hep-0001/software/IaaS/models/
+  startupProbe:
+    reset: true
+  readinessProbe:
+    reset: true
+  annotations:
+    slurm-job.vk.io/flavor: "dev-cpu"
+
+envoy:
+  enabled: true
+
+keda:
+  enabled: false
+
+prometheus:
+  enabled: true
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+  serviceAccounts:
+    server:
+      name: supersonic-interlink-prometheus-sa
+  server:
+    useExistingClusterRoleName: supersonic-interlink-prometheus-role
+
+grafana:
+  enabled: true
+  dashboardsConfigMaps:
+    default: supersonic-interlink-grafana-default-dashboard
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+  datasources:
+    datasources.yaml:
+      datasources:
+        - name: prometheus
+          type: prometheus
+          access: proxy
+          isDefault: true
+          url: http://supersonic-interlink-prometheus-server:9090
+          jsonData:
+            timeInterval: "5s"
+            tlsSkipVerify: true
+
+opentelemetry-collector:
+  enabled: true
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+
+tempo:
+  enabled: true
+  tempo:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+
+metricsCollector:
+  enabled: true

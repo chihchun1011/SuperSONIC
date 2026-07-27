@@ -2,7 +2,7 @@ triton:
   replicas: 1
   image: fastml/triton-torchgeo:22.07-py3-geometric # works for CMSSW run3
   command: ["/bin/sh", "-c"]
-  args: 
+  args:
     - |
       /opt/tritonserver/bin/tritonserver \
       --model-repository=/cvmfs/cms.cern.ch/el9_amd64_gcc12/cms/cmssw/CMSSW_14_1_0_pre7/external/el9_amd64_gcc12/data/RecoBTag/Combined/data/models/ \
@@ -12,17 +12,25 @@ triton:
       --exit-timeout-secs=60
   resources:
     limits: { cpu: 2, memory: 8G, nvidia.com/gpu: 1}
-    requests: { cpu: 2, memory: 8G, nvidia.com/gpu: 1}
+    # requests: { cpu: 2, memory: 8G, nvidia.com/gpu: 1}
+  nodeSelector:
+    kubernetes.io/hostname: interlink-htcondor
+  tolerations:
+    - key: virtual-node.interlink/no-schedule
+      operator: Exists
   modelRepository:
     enabled: true
-    storageType: cvmfs-pvc
+    storageType: cvmfs-hostPath
+    hostPath: /cvmfs
     mountPath: /cvmfs
+  startupProbe:
+    reset: true
   readinessProbe:
     reset: true
 
 envoy:
   enabled: true
-  
+
 keda:
   enabled: false
 
@@ -34,14 +42,14 @@ prometheus:
       memory: "128Mi"
   serviceAccounts:
     server:
-      name: supersonic-prometheus-sa
+      name: supersonic-interlink-prometheus-sa
   server:
-    useExistingClusterRoleName: supersonic-prometheus-role
+    useExistingClusterRoleName: supersonic-interlink-prometheus-role
 
 grafana:
   enabled: true
   dashboardsConfigMaps:
-    default: supersonic-grafana-default-dashboard
+    default: supersonic-interlink-grafana-default-dashboard
   resources:
     requests:
       cpu: "100m"
@@ -53,7 +61,7 @@ grafana:
           type: prometheus
           access: proxy
           isDefault: true
-          url: http://supersonic-prometheus-server:9090
+          url: http://supersonic-interlink-prometheus-server:9090
           jsonData:
             timeInterval: "5s"
             tlsSkipVerify: true
